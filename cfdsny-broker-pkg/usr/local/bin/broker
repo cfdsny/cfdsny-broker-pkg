@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+INSTALL_DIR="/opt/cfdsny-broker"
+exec startx "$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/modcomm_operator/run_operator.py" "$@" -- :0 vt1

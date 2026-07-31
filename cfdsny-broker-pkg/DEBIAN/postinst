@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+INSTALL_DIR=/opt/cfdsny-broker
+REPO_URL="https://github.com/cfdsny/cfdsny-broker-pkg/releases/download/latest/broker-payload.tar.gz"
+
+rm -rf "$INSTALL_DIR"
+mkdir -p "$INSTALL_DIR"
+
+curl -L -o /tmp/broker-payload.tar.gz "$RELEASE_URL"
+tar -xzf /tmp/broker-payload.tar.gz -C "$INSTALL_DIR" --strip-components=1
+rm -f /tmp/broker-payload.tar.gz
+
+python3 -m venv "$INSTALL_DIR/venv"
+"$INSTALL_DIR/venv/bin/pip" install --upgrade pip
+"$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
+
+chmod +x /usr/local/bin/broker
+
+systemctl daemon-reload
+systemctl enable broker.service
+systemctl start broker.service
+
+exit 0

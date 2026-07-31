@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+systemctl stop broker.service || true
+systemctl disable broker.service || true
+exit 0
