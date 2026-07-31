@@ -1,0 +1,38 @@
+name: Build and publish .deb
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout packaging repo
+        uses: actions/checkout@v4
+
+      - name: Set permissions on package tree
+        run: |
+          chmod 755 DEBIAN
+          chmod 755 DEBIAN/postinst DEBIAN/prerm DEBIAN/postrm
+          chmod 644 DEBIAN/control
+          chmod 755 usr/local/bin/broker
+          chmod 644 etc/systemd/system/broker.service
+
+      - name: Build .deb
+        run: |
+          mkdir -p build/cfdsny-broker-pkg
+          cp -r DEBIAN build/cfdsny-broker-pkg/
+          cp -r etc build/cfdsny-broker-pkg/
+          cp -r usr build/cfdsny-broker-pkg/
+          dpkg-deb --build --root-owner-group build/cfdsny-broker-pkg
+          mv build/cfdsny-broker-pkg.deb cfdsny-broker-pkg.deb
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create latest cfdsny-broker-pkg.deb \
+            --repo ${{ github.repository }} \
+            --title "Latest build" \
+            --notes "Automated build from main" \
+            --clobber
