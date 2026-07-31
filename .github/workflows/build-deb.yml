@@ -1,7 +1,7 @@
 name: Build and publish .deb
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # manual trigger for now, since builds are from main
 
 jobs:
   build:
@@ -31,8 +31,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh release delete latest --repo ${{ github.repository }} --yes || true
+          git push --delete origin latest || true
+
           gh release create latest cfdsny-broker-pkg.deb \
             --repo ${{ github.repository }} \
             --title "Latest build" \
-            --notes "Automated build from main" \
-            --clobber
+            --notes "Automated build from main"
