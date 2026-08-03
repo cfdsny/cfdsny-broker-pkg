@@ -7,7 +7,7 @@ Type=simple
 User=pi
 Environment=HOME=/home/pi
 WorkingDirectory=/opt/cfdsny-broker
-ExecStart=/usr/bin/startx /opt/cfdsny-broker/venv/bin/python3 /opt/cfdsny-broker/modcomm_operator/run_operator.py -- :0 vt1
+ExecStart=/usr/bin/startx /opt/cfdsny-broker/venv/bin/python3 /opt/cfdsny-broker/Desktop/modcomm_operator/run_operator.py -- :0 vt1
 Restart=on-failure
 RestartSec=5
 
