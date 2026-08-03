@@ -33,10 +33,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          gh release delete latest --repo ${{ github.repository }} --yes || true
-          git push --delete origin latest || true
+          gh release delete deb-latest --repo ${{ github.repository }} --yes || true
+          git push --delete origin deb-latest || true
 
-          gh release create latest cfdsny-broker-pkg.deb \
+          gh release create deb-latest cfdsny-broker-pkg.deb \
             --repo ${{ github.repository }} \
-            --title "Latest build" \
+            --title "Latest .deb build" \
             --notes "Automated build from main"
