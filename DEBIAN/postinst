@@ -2,7 +2,7 @@
 set -e
 
 INSTALL_DIR=/opt/cfdsny-broker
-REPO_URL="https://github.com/cfdsny/cfdsny-broker-pkg/releases/download/latest/broker-payload.tar.gz"
+RELEASE_URL="https://github.com/cfdsny/cfdsny-broker-pkg/releases/download/latest/broker-payload.tar.gz"
 
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
