@@ -4,6 +4,18 @@ set -e
 INSTALL_DIR=/opt/cfdsny-broker
 RELEASE_URL="https://github.com/cfdsny/cfdsny-broker-pkg/releases/download/latest/broker-payload.tar.gz"
 
+# Detect the primary human user on this system
+TARGET_USER=$(getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ {print $1; exit}')
+
+if [ -z "$TARGET_USER" ]; then
+    echo "ERROR: could not detect a target user for cfdsny-broker" >&2
+    exit 1
+fi
+
+TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+
+echo "Installing cfdsny-broker for user: $TARGET_USER (home: $TARGET_HOME)"
+
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 
@@ -15,12 +27,39 @@ python3 -m venv "$INSTALL_DIR/venv"
 "$INSTALL_DIR/venv/bin/pip" install --upgrade pip
 "$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/Desktop/requirements.txt"
 
-chown -R pi:pi "$INSTALL_DIR"
-
+chown -R "$TARGET_USER":"$TARGET_USER" "$INSTALL_DIR"
 chmod +x /usr/local/bin/broker
 
+cat > /etc/X11/Xwrapper.config << 'XWRAPPER_EOF'
+allowed_users=anybody
+needs_root_rights=yes
+XWRAPPER_EOF
+
+# Autologin on tty1 as the detected user
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf << OVERRIDE_EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $TARGET_USER --noclear %I \$TERM
+OVERRIDE_EOF
+
+# Autostart trigger in the target user's shell profile
+BASH_PROFILE="$TARGET_HOME/.bash_profile"
+AUTOSTART_MARKER="# cfdsny-broker autostart"
+
+if ! grep -qF "$AUTOSTART_MARKER" "$BASH_PROFILE" 2>/dev/null; then
+    cat >> "$BASH_PROFILE" << PROFILE_EOF
+
+$AUTOSTART_MARKER
+if [ -z "\$DISPLAY" ] && [ "\$(tty)" = "/dev/tty1" ]; then
+    exec startx "$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/Desktop/run_operator.py" -- :0 vt1
+fi
+PROFILE_EOF
+fi
+
+chown "$TARGET_USER":"$TARGET_USER" "$BASH_PROFILE"
+
 systemctl daemon-reload
-systemctl enable broker.service
-systemctl start broker.service
+systemctl restart getty@tty1.service
 
 exit 0
